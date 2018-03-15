@@ -42,7 +42,7 @@ nugetのパッケージはVisual Studio 2017メニューの【ツール】の【
 
 下図の【ソリューションのNuGetパッケージの管理】画面の右上の赤丸で囲った【復元】ボタンを押すことでダウンロードができます。
 
-![NuGet Manager](https://github.com/shaderjp/HDROpenEXRViewer/blob/master/ScreenShots/nuget.jpg)
+![NuGet Manager](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/nuget.jpg)
 
 Releaseビルド済みの実行ファイルは下記にあります。
 
