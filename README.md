@@ -1,4 +1,4 @@
-# HDROpenEXRViewer ver 0.4
+# HDRImageViewer ver 0.4
 HDR image viewer for HDR10 displa1y.
 
 Windows 10のHDRに対応したHDR10ディスプレイでOpenEXRやJPEG XRやDDSを表示するサンプルです.
