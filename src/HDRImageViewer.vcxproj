@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{010274FF-11D2-4FBC-88E4-0B6DC174507F}</ProjectGuid>
+    <ProjectGuid>{1CABFA9D-5D25-4B1C-A092-C9C4CB67BBDE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>D3D12HDR</RootNamespace>
     <ProjectName>D3D12HDRViewer</ProjectName>

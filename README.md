@@ -31,8 +31,8 @@ https://www.resetera.com/threads/hdr-games-analysed.23587/
 
 ThirdPartyに入っているサブモジュール.
 
-- DirectXTex
-- imgui
+- DirectXTex　https://github.com/Microsoft/DirectXTex
+- imgui　https://github.com/ocornut/imgui
 
 nugetより取得したライブラリ
 - OpenEXR openexr-msvc14-x64 https://www.nuget.org/packages/openexr-msvc14-x64/
