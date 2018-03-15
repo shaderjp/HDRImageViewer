@@ -5,16 +5,16 @@ Windows 10のHDRに対応したHDR10ディスプレイでOpenEXRやJPEG XRやDDS
 
 # Screen Shots
 
-![ScreenShot](https://github.com/shaderjp/HDROpenEXRViewer/blob/master/ScreenShots/screenshot.jpg)
+![ScreenShot](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/screenshot.jpg)
 
 ヒートマップモードでは0 nitsから10,000 nitsの輝度に応じたヒートマップの表示が行えます(ST.2084時).内部計算時の輝度の分布がわかります.
 
-![ScreenShot](https://github.com/shaderjp/HDROpenEXRViewer/blob/master/ScreenShots/heatmap.jpg)
+![ScreenShot](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/heatmap.jpg)
 ヒートマップモード
 
 ヒートマップのテーブルは下記です.左が0 nitsで右が10,000 nitsです.
 
-![ScreenShot](https://github.com/shaderjp/HDROpenEXRViewer/blob/master/ScreenShots/heatmapReference.png)
+![ScreenShot](https://github.com/shaderjp/HDRImageViewer/master/ScreenShots/heatmapReference.png)
 
 ヒートマップについては下記の記事のテーブルを参考にしています.
 
@@ -50,7 +50,7 @@ bin\D3D12HDRViewer.exe
 
 # 操作方法
 
-![ScreenShot](https://github.com/shaderjp/HDROpenEXRViewer/blob/master/ScreenShots/screenshot.jpg)
+![ScreenShot](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/screenshot.jpg)
 
 ## imguiのWindow
 
