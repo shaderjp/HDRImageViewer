@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+# Visual Studio / MSBuild outputs
+.vs/
+*.log
+[Bb]in/
+[Oo]bj/
+src/.vs/
+src/[Bb]in/
+src/[Oo]bj/
+src/packages/
+src/*.hlsl.h
+src/imgui.ini

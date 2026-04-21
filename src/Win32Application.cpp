@@ -13,7 +13,7 @@
 #include "Win32Application.h"
 
 #include <imgui.h>
-#include "imgui_impl_dx12.h"
+#include <backends/imgui_impl_win32.h>
 
 HWND Win32Application::m_hwnd = nullptr;
 bool Win32Application::m_fullscreenMode = false;

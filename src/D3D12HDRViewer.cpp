@@ -1,4 +1,4 @@
-//*********************************************************
+ï»¿//*********************************************************
 //
 // MIT License
 // Copyright(c) 2018 Masafumi Takahashi / Shader.jp
@@ -34,7 +34,8 @@
 
 // imgui
 #include <imgui.h>
-#include "imgui_impl_dx12.h"
+#include <backends/imgui_impl_dx12.h>
+#include <backends/imgui_impl_win32.h>
 
 // Precompiled shaders.
 #include "paletteVS.hlsl.h"
@@ -218,10 +219,33 @@ void D3D12HDRViewer::LoadPipeline()
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE imguiCPUHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
 	CD3DX12_GPU_DESCRIPTOR_HANDLE imguiGPUHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
-	ImGui_ImplDX12_Init(Win32Application::GetHwnd(), FrameCount, m_device.Get(), m_swapChainFormats[m_currentSwapChainColorSpace], imguiCPUHandle, imguiGPUHandle);
+	ImGui_ImplWin32_Init(Win32Application::GetHwnd());
+	InitializeImGuiRenderer(m_swapChainFormats[m_currentSwapChainBitDepth]);
 	ImGui::StyleColorsDark();
 }
 
+void D3D12HDRViewer::InitializeImGuiRenderer(DXGI_FORMAT rtvFormat)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE imguiCPUHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE imguiGPUHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
+
+	ImGui_ImplDX12_InitInfo initInfo = {};
+	initInfo.Device = m_device.Get();
+	initInfo.CommandQueue = m_commandQueue.Get();
+	initInfo.NumFramesInFlight = FrameCount;
+	initInfo.RTVFormat = rtvFormat;
+	initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN;
+	initInfo.SrvDescriptorHeap = m_srvHeap.Get();
+	initInfo.LegacySingleSrvCpuDescriptor = imguiCPUHandle;
+	initInfo.LegacySingleSrvGpuDescriptor = imguiGPUHandle;
+	ImGui_ImplDX12_Init(&initInfo);
+}
+
+void D3D12HDRViewer::ResetImGuiRenderer(DXGI_FORMAT rtvFormat)
+{
+	ImGui_ImplDX12_Shutdown();
+	InitializeImGuiRenderer(rtvFormat);
+}
 // Load the sample assets.
 void D3D12HDRViewer::LoadAssets()
 {
@@ -377,7 +401,7 @@ void D3D12HDRViewer::LoadAssets()
 		DirectX::TexMetadata metaData;
 		DirectX::ScratchImage scratchImage;
 
-		ThrowIfFailed(LoadFromDDSFile(L"heatmap.dds", 0, &metaData, scratchImage));
+		ThrowIfFailed(LoadFromDDSFile(L"heatmap.dds", DDS_FLAGS_NONE, &metaData, scratchImage));
 
 		const size_t subresoucesize = metaData.mipLevels;
 
@@ -612,7 +636,7 @@ void D3D12HDRViewer::OpenFile()
 	ofn.lpstrFilter = L"OpenEXR(*.exr)\0*.exr\0"
 		L"DDS(*.dds)\0*.dds\0"
 		L"JPEG XR(*.jxr)\0*.jxr\0"
-		L"‚·‚×‚Ä‚Ìƒtƒ@ƒCƒ‹(*.*)\0*.*\0\0";
+		L"All Files(*.*)\0*.*\0\0";
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_FILEMUSTEXIST;
@@ -661,7 +685,7 @@ HRESULT D3D12HDRViewer::LoadTexture(std::wstring  filepath, const TextureFromat 
 	if (textureFormat== DDS)
 	{
 		// DDS
-		ThrowIfFailed(LoadFromDDSFile(filepath.c_str(), 0, &metaData, *scratchImage));
+		ThrowIfFailed(LoadFromDDSFile(filepath.c_str(), DDS_FLAGS_NONE, &metaData, *scratchImage));
 	}
 	else if (textureFormat == OpenEXR)
 	{
@@ -671,7 +695,7 @@ HRESULT D3D12HDRViewer::LoadTexture(std::wstring  filepath, const TextureFromat 
 	else if (textureFormat == JXR)
 	{
 		// JPEG XR
-		ThrowIfFailed(LoadFromWICFile(filepath.c_str(), 0, &metaData, *scratchImage));
+		ThrowIfFailed(LoadFromWICFile(filepath.c_str(), WIC_FLAGS_NONE, &metaData, *scratchImage));
 	}
 	else
 	{
@@ -754,7 +778,9 @@ HRESULT D3D12HDRViewer::LoadTexture(std::wstring  filepath, const TextureFromat 
 //
 void D3D12HDRViewer::IMGuiUpdate()
 {
-	ImGui_ImplDX12_NewFrame(m_commandList.Get());
+	ImGui_ImplWin32_NewFrame();
+	ImGui_ImplDX12_NewFrame();
+	ImGui::NewFrame();
 	
 	int radioButton = static_cast<int>(m_currentSwapChainBitDepth);
 	
@@ -775,8 +801,7 @@ void D3D12HDRViewer::IMGuiUpdate()
 			UpdateSwapChainBuffer(m_width, m_height, newFormat);
 			SetHDRMetaData(HDRMetaDataPool[m_hdrMetaDataPoolIdx][0], HDRMetaDataPool[m_hdrMetaDataPoolIdx][1], HDRMetaDataPool[m_hdrMetaDataPoolIdx][2], HDRMetaDataPool[m_hdrMetaDataPoolIdx][3]);
 
-			ImGui_ImplDX12_InvalidateDeviceObjects();
-			ImGui_ImplDX12_CreateDeviceObjects(newFormat);
+			ResetImGuiRenderer(newFormat);
 		}
 		
 		m_openLoadDialog = ImGui::Button("Load File");
@@ -885,7 +910,7 @@ void D3D12HDRViewer::RenderScene()
 		m_commandList->DrawInstanced(3, 1, 0, 0);
 
 		ImGui::Render();
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData());
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_commandList.Get());
 
 		PIXEndEvent(m_commandList.Get());
 
@@ -934,7 +959,7 @@ void D3D12HDRViewer::OnSizeChanged(UINT width, UINT height, bool minimized)
     m_windowVisible = !minimized;
 
 	ImGui_ImplDX12_InvalidateDeviceObjects();
-	ImGui_ImplDX12_CreateDeviceObjects(GetBackBufferFormat());
+	ImGui_ImplDX12_CreateDeviceObjects();
 
 }
 
@@ -945,6 +970,7 @@ void D3D12HDRViewer::OnDestroy()
 	WaitForGpu();
 
 	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
 	if (!m_tearingSupport)
@@ -996,8 +1022,7 @@ void D3D12HDRViewer::OnKeyDown(UINT8 key)
             UpdateSwapChainBuffer(m_width, m_height, newFormat);
             SetHDRMetaData(HDRMetaDataPool[m_hdrMetaDataPoolIdx][0], HDRMetaDataPool[m_hdrMetaDataPoolIdx][1], HDRMetaDataPool[m_hdrMetaDataPoolIdx][2], HDRMetaDataPool[m_hdrMetaDataPoolIdx][3]);
 
-			ImGui_ImplDX12_InvalidateDeviceObjects();
-			ImGui_ImplDX12_CreateDeviceObjects(newFormat);
+			ResetImGuiRenderer(newFormat);
             break;
         }
 
@@ -1008,8 +1033,7 @@ void D3D12HDRViewer::OnKeyDown(UINT8 key)
             UpdateSwapChainBuffer(m_width, m_height, newFormat);
             SetHDRMetaData(HDRMetaDataPool[m_hdrMetaDataPoolIdx][0], HDRMetaDataPool[m_hdrMetaDataPoolIdx][1], HDRMetaDataPool[m_hdrMetaDataPoolIdx][2], HDRMetaDataPool[m_hdrMetaDataPoolIdx][3]);
 
-			ImGui_ImplDX12_InvalidateDeviceObjects();
-			ImGui_ImplDX12_CreateDeviceObjects(newFormat);
+			ResetImGuiRenderer(newFormat);
             break;
         }
 

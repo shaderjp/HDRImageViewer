@@ -191,6 +191,8 @@ private:
 	void LoadPipeline();
 	void LoadAssets();
 	void LoadSizeDependentResources();
+	void InitializeImGuiRenderer(DXGI_FORMAT rtvFormat);
+	void ResetImGuiRenderer(DXGI_FORMAT rtvFormat);
 	XMFLOAT3 TransformVertex(XMFLOAT2 point, XMFLOAT2 offset);
 	void RenderScene();
 	void WaitForGpu();
