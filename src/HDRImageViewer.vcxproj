@@ -149,56 +149,35 @@
     <None Include="packages.config" />
     <None Include="present.hlsli" />
     <None Include="palette.hlsli" />
+    <None Include="presentPS.hlsl" />
+    <None Include="presentVS.hlsl" />
+    <None Include="palettePS.hlsl" />
+    <None Include="paletteVS.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="presentPS.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">g_%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">g_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Fullpath).h</HeaderFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Fullpath).h</HeaderFileOutput>
-    </FxCompile>
-    <FxCompile Include="presentVS.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">g_%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">g_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Fullpath).h</HeaderFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Fullpath).h</HeaderFileOutput>
-    </FxCompile>
-    <FxCompile Include="palettePS.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">g_%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">g_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Fullpath).h</HeaderFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Fullpath).h</HeaderFileOutput>
-    </FxCompile>
-    <FxCompile Include="paletteVS.hlsl">
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VSMain</EntryPointName>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">g_%(Filename)</VariableName>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">g_%(Filename)</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Fullpath).h</HeaderFileOutput>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Fullpath).h</HeaderFileOutput>
-    </FxCompile>
+    <DxcShader Include="presentPS.hlsl">
+      <EntryPoint>PSMain</EntryPoint>
+      <Profile>ps_6_6</Profile>
+      <VariableName>g_presentPS</VariableName>
+    </DxcShader>
+    <DxcShader Include="presentVS.hlsl">
+      <EntryPoint>VSMain</EntryPoint>
+      <Profile>vs_6_6</Profile>
+      <VariableName>g_presentVS</VariableName>
+    </DxcShader>
+    <DxcShader Include="palettePS.hlsl">
+      <EntryPoint>PSMain</EntryPoint>
+      <Profile>ps_6_6</Profile>
+      <VariableName>g_palettePS</VariableName>
+    </DxcShader>
+    <DxcShader Include="paletteVS.hlsl">
+      <EntryPoint>VSMain</EntryPoint>
+      <Profile>vs_6_6</Profile>
+      <VariableName>g_paletteVS</VariableName>
+    </DxcShader>
+    <HlslInclude Include="color.hlsli" />
+    <HlslInclude Include="present.hlsli" />
+    <HlslInclude Include="palette.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="heatmap.dds" />
@@ -209,6 +188,25 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <PropertyGroup>
+    <DxcSdkPath>$(WindowsSDK_ExecutablePath_x64.Split(';')[0])</DxcSdkPath>
+    <DxcSdkPath Condition="'$(DxcSdkPath)' != '' and !HasTrailingSlash('$(DxcSdkPath)')">$(DxcSdkPath)\</DxcSdkPath>
+    <DxcExecutable Condition="'$(DxcExecutable)' == ''">$(DxcSdkPath)dxc.exe</DxcExecutable>
+    <DxcConfigurationOptions Condition="'$(Configuration)' == 'Debug'">-Zi -Qembed_debug -Od</DxcConfigurationOptions>
+    <DxcConfigurationOptions Condition="'$(Configuration)' != 'Debug'">-O3 -Qstrip_debug -Qstrip_reflect</DxcConfigurationOptions>
+  </PropertyGroup>
+  <Target Name="CompileDxcShaders"
+          BeforeTargets="ClCompile"
+          Inputs="%(DxcShader.FullPath);@(HlslInclude)"
+          Outputs="%(DxcShader.FullPath).h;$(OutDir)%(DxcShader.Filename).cso">
+    <Error Condition="!Exists('$(DxcExecutable)')" Text="dxc.exe was not found: $(DxcExecutable)" />
+    <MakeDir Directories="$(OutDir)" />
+    <Exec Command="&quot;$(DxcExecutable)&quot; -T %(DxcShader.Profile) -E %(DxcShader.EntryPoint) -WX $(DxcConfigurationOptions) -Fo &quot;$(OutDir)%(DxcShader.Filename).cso&quot; -Fh &quot;%(DxcShader.FullPath).h&quot; -Vn %(DxcShader.VariableName) &quot;%(DxcShader.FullPath)&quot;" />
+    <ItemGroup>
+      <FileWrites Include="%(DxcShader.FullPath).h" />
+      <FileWrites Include="$(OutDir)%(DxcShader.Filename).cso" />
+    </ItemGroup>
+  </Target>
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(SolutionDir)packages\WinPixEventRuntime.1.0.161208001\build\WinPixEventRuntime.targets" Condition="Exists('$(SolutionDir)packages\WinPixEventRuntime.1.0.161208001\build\WinPixEventRuntime.targets')" />
     <Import Project="packages\zlib-vc140-static-32_64.1.2.11\build\native\zlib-vc140-static-32_64.targets" Condition="Exists('packages\zlib-vc140-static-32_64.1.2.11\build\native\zlib-vc140-static-32_64.targets')" />

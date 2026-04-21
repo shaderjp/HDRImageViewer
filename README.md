@@ -1,84 +1,104 @@
-# HDRImageViewer ver 0.4
-HDR image viewer for HDR10 displa1y.
+# HDRImageViewer
 
-Windows 10のHDRに対応したHDR10ディスプレイでOpenEXRやJPEG XRやDDSを表示するサンプルです.
+HDRImageViewer is a Direct3D 12 HDR image viewer for HDR10 displays on Windows.
 
-# Screen Shots
+Windows の HDR 表示に対応した HDR10 ディスプレイで、OpenEXR / DDS / JPEG XR 画像を表示するサンプルです。表示カーブは sRGB、ST.2084、Linear を切り替えられます。
+
+## Screen Shots
 
 ![ScreenShot](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/screenshot.jpg)
 
-ヒートマップモードでは0 nitsから10,000 nitsの輝度に応じたヒートマップの表示が行えます(ST.2084時).内部計算時の輝度の分布がわかります.
+ヒートマップモードでは、ST.2084 出力時に 0 nits から 10,000 nits の輝度に応じたヒートマップを表示できます。内部計算時の輝度分布を確認するための表示です。
 
 ![ScreenShot](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/heatmap.jpg)
-ヒートマップモード
 
-ヒートマップのテーブルは下記です.左が0 nitsで右が10,000 nitsです.
+ヒートマップのテーブルは下記です。左が 0 nits、右が 10,000 nits です。
 
-![ScreenShot](https://github.com/shaderjp/HDRImageViewer/master/ScreenShots/heatmapReference.png)
+![Heatmap Reference](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/heatmapReference.png)
 
-ヒートマップについては下記の記事のテーブルを参考にしています.
+ヒートマップについては下記の記事のテーブルを参考にしています。
 
 https://www.resetera.com/threads/hdr-games-analysed.23587/
 
-※スクリーンキャプチャ時にsRGBに落ちています。
+スクリーンキャプチャは sRGB に変換されています。
 
-# Requirements
-- Windows 10 SDK 10.0.16299.0
-- Visual Studio 2017 with the Windows 10 Fall Creators Update SDK
-- Direct3D12 Compatible GPU
+## Requirements
 
-# Building Sources
+- Windows 10 / Windows 11
+- Visual Studio 2022
+- Windows 10 SDK または Windows 11 SDK
+- `dxc.exe` を含む Windows SDK
+- Direct3D 12 対応 GPU / ドライバー
+- Shader Model 6.6 対応環境
 
-ThirdPartyに入っているサブモジュール.
+## Building Sources
 
-- DirectXTex　https://github.com/Microsoft/DirectXTex
-- imgui　https://github.com/ocornut/imgui
+ソリューションは下記です。
 
-nugetより取得したライブラリ
-- OpenEXR openexr-msvc14-x64 https://www.nuget.org/packages/openexr-msvc14-x64/
-- zlib zlib-vc140-static-32_64 https://www.nuget.org/packages/zlib-vc140-static-32_64/
+```text
+src\HDRImageViewer.sln
+```
 
-nugetのパッケージはVisual Studio 2017メニューの【ツール】の【NuGet パッケージマネージャー】、【ソリューションのNuGetパッケージの管理】を開きます。
+Release x64 または Debug x64 でビルドしてください。
 
-下図の【ソリューションのNuGetパッケージの管理】画面の右上の赤丸で囲った【復元】ボタンを押すことでダウンロードができます。
+現在のシェーダービルドは Visual Studio の `FxCompile` ではなく、Windows SDK の `dxc.exe` を使用します。プロジェクトの `CompileDxcShaders` ターゲットで Shader Model 6.6 の DXIL を生成し、従来と同じように `.hlsl.h` と `.cso` を出力します。
 
-![NuGet Manager](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/nuget.jpg)
+ThirdParty に入っているサブモジュール:
 
-Releaseビルド済みの実行ファイルは下記にあります。
+- DirectXTex: https://github.com/microsoft/DirectXTex
+- imgui: https://github.com/ocornut/imgui
 
+NuGet より取得するライブラリ:
+
+- OpenEXR openexr-msvc14-x64: https://www.nuget.org/packages/openexr-msvc14-x64/
+- zlib zlib-vc140-static-32_64: https://www.nuget.org/packages/zlib-vc140-static-32_64/
+
+NuGet パッケージは Visual Studio の「ソリューションの NuGet パッケージの復元」で取得できます。
+
+Release ビルド済みの実行ファイルは下記にあります。
+
+```text
 bin\D3D12HDRViewer.exe
+```
 
-# 操作方法
+## Runtime Notes
+
+- ファイル選択には `IFileOpenDialog` を使用しています。
+- 「ダウンロード」などの Known Folder からも OpenEXR / DDS / JPEG XR ファイルを選択できます。
+- imgui は最新 backend に合わせ、DirectX 12 用 SRV descriptor allocator をアプリ側で渡しています。
+
+## 操作方法
 
 ![ScreenShot](https://github.com/shaderjp/HDRImageViewer/blob/master/ScreenShots/screenshot.jpg)
 
-## imguiのWindow
+### imgui の Window
 
-Windowはマウスで画面内で動かしたりサイズを変えたりできます。
-初期状態ではWindowが重なった状態で出るかもしれません。
+Window はマウスで画面内を移動したりサイズを変えたりできます。初期状態では Window が重なって表示される場合があります。
 
 ### Edit Window
-- sRGB, ST.2084, Linear...色空間の変更。Linearは16bit colorで出力します.
-- Load Fileボタン...ファイルの読み込み。OpenEXRとDDSに対応
-- EV...EV値の変更+8.0 から -8.0
-- Heatmap...ST.2084選択時にチェックを入れると輝度に応じたヒートマップが表示されます.
+
+- sRGB / ST.2084 / Linear: 色空間の変更。Linear は 16bit color で出力します。
+- Load File: OpenEXR / DDS / JPEG XR ファイルの読み込み。
+- EV: EV 値の変更。+8.0 から -8.0 まで。
+- Heatmap: ST.2084 選択時に有効にすると、輝度に応じたヒートマップを表示します。
 
 ### Display Information
 
-ディスプレイの輝度や色域の原色の位置（CIE 1931上の）などを確認できます。
+ディスプレイの輝度や、CIE 1931 上の色域の原色位置などを確認できます。
 
-正しい値が取得できない環境があります。
+環境によっては正しい値が取得できない場合があります。
 
 ## キーボード操作
-- PgUp,PgDn...色空間の変更
-- H...10bitフォーマット時にST.2084とsRGBを切り替える
-- U...GUIのオン、オフ。一度、閉じたimguiのWindowsを再表示する
-- M...プリセットメタデータの変更
-- Alt + Enter...フルスクリーン
 
-###  サンプルデータ
+- PgUp / PgDn: 色空間の変更
+- H: 10bit フォーマット時に ST.2084 と sRGB を切り替える
+- U: GUI のオン / オフ。一度閉じた imgui Window を再表示する
+- M: プリセットメタデータの変更
+- Alt + Enter: フルスクリーン
 
-以下のリポジトリにOpenEXR画像をいくつか公開しています
+## サンプルデータ
+
+以下のリポジトリに OpenEXR 画像をいくつか公開しています。
 
 https://github.com/shaderjp/OpenEXRSampleImages
 
@@ -86,11 +106,12 @@ https://github.com/shaderjp/OpenEXRSampleImages
 
 http://masafumi.cocolog-nifty.com/masafumis_diary/2018/01/hdr10openexrhdr.html
 
-# Todo
-- ベースとなるMicrosoftのサンプルコードから不要な処理が除去。
+## Todo
+
+- ベースとなる Microsoft のサンプルコードから不要な処理を除去
 - English documentation
 
-# 既知の不具合
-- フルスクリーン時にファイルを開こうとするとダイアログ表示ができません。
-- ファイルロードのダイアログで読み込むファイルタイプのフィルタを変えるとフィルタが反映されないことがある。フィルタが反映されないときはダイアログのフォルダ階層を移動してみてください。
-- HDRがオンの際にLinear選択をするとimguiの輝度が高い状態になる。
+## 既知の不具合
+
+- フルスクリーン時にファイルを開こうとすると、環境によってダイアログ表示が不安定になる場合があります。
+- HDR がオンの際に Linear を選択すると、imgui の輝度が高い状態になります。

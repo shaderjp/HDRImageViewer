@@ -26,6 +26,7 @@
 #include "D3D12HDRViewer.h"
 #include <dxgidebug.h>
 #include <Commdlg.h>
+#include <shobjidl.h>
 #include <sstream>
 #include <iomanip>
 
@@ -197,7 +198,7 @@ void D3D12HDRViewer::LoadPipeline()
 
 		// Describe and create a shader resource view (SRV) descriptor heap.
 		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-		srvHeapDesc.NumDescriptors = 100;					// A descriptor for each of the 2 intermediate render targets.
+		srvHeapDesc.NumDescriptors = SrvHeapDescriptorCount;
 		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		ThrowIfFailed(m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_srvHeap)));
@@ -217,8 +218,6 @@ void D3D12HDRViewer::LoadPipeline()
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE imguiCPUHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
-	CD3DX12_GPU_DESCRIPTOR_HANDLE imguiGPUHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
 	ImGui_ImplWin32_Init(Win32Application::GetHwnd());
 	InitializeImGuiRenderer(m_swapChainFormats[m_currentSwapChainBitDepth]);
 	ImGui::StyleColorsDark();
@@ -226,8 +225,7 @@ void D3D12HDRViewer::LoadPipeline()
 
 void D3D12HDRViewer::InitializeImGuiRenderer(DXGI_FORMAT rtvFormat)
 {
-	CD3DX12_CPU_DESCRIPTOR_HANDLE imguiCPUHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
-	CD3DX12_GPU_DESCRIPTOR_HANDLE imguiGPUHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart(), IMGUI_HEAP_OFFSET, m_srvDescriptorSize);
+	ResetImGuiSrvDescriptorAllocator();
 
 	ImGui_ImplDX12_InitInfo initInfo = {};
 	initInfo.Device = m_device.Get();
@@ -236,9 +234,43 @@ void D3D12HDRViewer::InitializeImGuiRenderer(DXGI_FORMAT rtvFormat)
 	initInfo.RTVFormat = rtvFormat;
 	initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN;
 	initInfo.SrvDescriptorHeap = m_srvHeap.Get();
-	initInfo.LegacySingleSrvCpuDescriptor = imguiCPUHandle;
-	initInfo.LegacySingleSrvGpuDescriptor = imguiGPUHandle;
+	initInfo.UserData = this;
+	initInfo.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* outCpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE* outGpuHandle)
+	{
+		D3D12HDRViewer* viewer = static_cast<D3D12HDRViewer*>(info->UserData);
+		IM_ASSERT(viewer != nullptr);
+		IM_ASSERT(!viewer->m_imguiSrvDescriptorFreeList.empty());
+
+		const UINT descriptorIndex = viewer->m_imguiSrvDescriptorFreeList.back();
+		viewer->m_imguiSrvDescriptorFreeList.pop_back();
+
+		*outCpuHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(viewer->m_srvHeap->GetCPUDescriptorHandleForHeapStart(), descriptorIndex, viewer->m_srvDescriptorSize);
+		*outGpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(viewer->m_srvHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, viewer->m_srvDescriptorSize);
+	};
+	initInfo.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE)
+	{
+		D3D12HDRViewer* viewer = static_cast<D3D12HDRViewer*>(info->UserData);
+		IM_ASSERT(viewer != nullptr);
+
+		const D3D12_CPU_DESCRIPTOR_HANDLE baseCpuHandle = viewer->m_srvHeap->GetCPUDescriptorHandleForHeapStart();
+		IM_ASSERT(cpuHandle.ptr >= baseCpuHandle.ptr);
+		IM_ASSERT((cpuHandle.ptr - baseCpuHandle.ptr) % viewer->m_srvDescriptorSize == 0);
+
+		const UINT descriptorIndex = static_cast<UINT>((cpuHandle.ptr - baseCpuHandle.ptr) / viewer->m_srvDescriptorSize);
+		IM_ASSERT(descriptorIndex >= IMGUI_HEAP_OFFSET && descriptorIndex < SrvHeapDescriptorCount);
+		viewer->m_imguiSrvDescriptorFreeList.push_back(descriptorIndex);
+	};
 	ImGui_ImplDX12_Init(&initInfo);
+	ImGui_ImplDX12_CreateDeviceObjects();
+}
+
+void D3D12HDRViewer::ResetImGuiSrvDescriptorAllocator()
+{
+	m_imguiSrvDescriptorFreeList.clear();
+	for (UINT descriptorIndex = SrvHeapDescriptorCount; descriptorIndex > IMGUI_HEAP_OFFSET; --descriptorIndex)
+	{
+		m_imguiSrvDescriptorFreeList.push_back(descriptorIndex - 1);
+	}
 }
 
 void D3D12HDRViewer::ResetImGuiRenderer(DXGI_FORMAT rtvFormat)
@@ -626,47 +658,70 @@ void D3D12HDRViewer::OpenFile()
 {
 	m_openLoadDialog = false;
 
-	wchar_t currentDirectry[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH+1, currentDirectry);
-
-	OPENFILENAME ofn;
-	wchar_t szFile[MAX_PATH] = L"";
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.lpstrFilter = L"OpenEXR(*.exr)\0*.exr\0"
-		L"DDS(*.dds)\0*.dds\0"
-		L"JPEG XR(*.jxr)\0*.jxr\0"
-		L"All Files(*.*)\0*.*\0\0";
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.Flags = OFN_FILEMUSTEXIST;
-		
-	if (GetOpenFileName(&ofn))
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	const bool shouldUninitializeCom = SUCCEEDED(hr);
+	if (FAILED(hr) && hr != RPC_E_CHANGED_MODE)
 	{
-		m_textureName = ofn.lpstrFile;
-		size_t extCount = m_textureName.find_last_of(L".");
-		std::wstring extname = m_textureName.substr(extCount, m_textureName.size() - extCount);
+		return;
+	}
 
-		TextureFromat format = Unsupported;
-		if (extname == L".exr")
+	ComPtr<IFileOpenDialog> dialog;
+	if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dialog))))
+	{
+		const COMDLG_FILTERSPEC filters[] =
 		{
-			m_format = OpenEXR;
-			m_isLoadTexture = true;
-		}
-		else if (extname == L".dds")
+			{ L"Supported Images", L"*.exr;*.dds;*.jxr" },
+			{ L"OpenEXR", L"*.exr" },
+			{ L"DDS", L"*.dds" },
+			{ L"JPEG XR", L"*.jxr" },
+			{ L"All Files", L"*.*" },
+		};
+		dialog->SetFileTypes(_countof(filters), filters);
+		dialog->SetFileTypeIndex(1);
+		dialog->SetOptions(FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM);
+
+		if (SUCCEEDED(dialog->Show(Win32Application::GetHwnd())))
 		{
-			m_format = DDS;
-			m_isLoadTexture = true;
-		}
-		else if (extname == L".jxr")
-		{
-			m_format = JXR;
-			m_isLoadTexture = true;
+			ComPtr<IShellItem> item;
+			if (SUCCEEDED(dialog->GetResult(&item)))
+			{
+				PWSTR filePath = nullptr;
+				if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &filePath)))
+				{
+					m_textureName = filePath;
+					CoTaskMemFree(filePath);
+
+					size_t extCount = m_textureName.find_last_of(L".");
+					std::wstring extname = extCount == std::wstring::npos ? L"" : m_textureName.substr(extCount);
+					for (wchar_t& ch : extname)
+					{
+						ch = static_cast<wchar_t>(towlower(ch));
+					}
+
+					if (extname == L".exr")
+					{
+						m_format = OpenEXR;
+						m_isLoadTexture = true;
+					}
+					else if (extname == L".dds")
+					{
+						m_format = DDS;
+						m_isLoadTexture = true;
+					}
+					else if (extname == L".jxr")
+					{
+						m_format = JXR;
+						m_isLoadTexture = true;
+					}
+				}
+			}
 		}
 	}
 
-
-	SetCurrentDirectory(currentDirectry);
+	if (shouldUninitializeCom)
+	{
+		CoUninitialize();
+	}
 }
 
 

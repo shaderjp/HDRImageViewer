@@ -124,21 +124,19 @@
     <None Include="color.hlsli">
       <Filter>Assets\Shaders</Filter>
     </None>
+    <None Include="presentPS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </None>
+    <None Include="presentVS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </None>
+    <None Include="paletteVS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </None>
+    <None Include="palettePS.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </None>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="presentPS.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="presentVS.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="paletteVS.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="palettePS.hlsl">
-      <Filter>Assets\Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="heatmap.dds">
