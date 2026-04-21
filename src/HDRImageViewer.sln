@@ -1,9 +1,9 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2036
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "..\ThirdParty\DirectXTex\DirectXTex\DirectXTex_Desktop_2017.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "..\ThirdParty\DirectXTex\DirectXTex\DirectXTex_Desktop_2022.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "D3D12HDRViewer", "HDRImageViewer.vcxproj", "{1CABFA9D-5D25-4B1C-A092-C9C4CB67BBDE}"
 EndProject

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "DXSample.h"
+#include <vector>
 
 using namespace DirectX;
 
@@ -58,6 +59,7 @@ protected:
 private:
 	static const float ClearColor[4];
 	static const UINT TrianglesVertexCount = 18;
+	static const UINT SrvHeapDescriptorCount = 100;
 
 	// Vertex definitions.
 	struct PresentVertex
@@ -142,6 +144,7 @@ private:
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+	std::vector<UINT> m_imguiSrvDescriptorFreeList;
 	UINT m_rtvDescriptorSize;
 	UINT m_srvDescriptorSize;
 	DXGI_FORMAT m_swapChainFormats[SwapChainBitDepthCount];
@@ -191,6 +194,9 @@ private:
 	void LoadPipeline();
 	void LoadAssets();
 	void LoadSizeDependentResources();
+	void InitializeImGuiRenderer(DXGI_FORMAT rtvFormat);
+	void ResetImGuiSrvDescriptorAllocator();
+	void ResetImGuiRenderer(DXGI_FORMAT rtvFormat);
 	XMFLOAT3 TransformVertex(XMFLOAT2 point, XMFLOAT2 offset);
 	void RenderScene();
 	void WaitForGpu();
